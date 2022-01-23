@@ -5,10 +5,6 @@
 #include <algorithm>
 #include <queue>
 
-#define WHITE 0
-#define GREY  1
-#define BLACK 2
-
 using namespace std;
 
 struct pessoa{
@@ -24,7 +20,7 @@ Pessoa *obterAdjacencias(Pessoa **adj_list, int pessoa_id);
 int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool verificar_num_max_pais);
 Pessoa *criar_pessoa(int pessoa_id);
 int dfs(int nOfVertices, Pessoa **adjList);
-int dfs_visit(Pessoa *p);
+int dfs_visit(Pessoa *p, Pessoa **adjList, vector<bool> &marked, vector<bool> &onStack);
 Pessoa *ancestraisEmComum(Pessoa **adjListTransposed, int v1, int v2);
 int limparListasPessoas(Pessoa *lst);
 int imprimirListaPessoas(Pessoa *lst);
@@ -117,32 +113,35 @@ int main(){
 }
 
 int dfs(int nOfVertices, Pessoa **adjList){
+    vector<bool> marked(nOfVertices, false);
+    vector<bool> onStack(nOfVertices, false);
+
     for (int i = 0; i < nOfVertices; i++){
-        Pessoa *p = adjList[nOfVertices];
-        if (p->mark == WHITE)
-            if (dfs_visit(p) == -1)
-                return -1;
+        Pessoa *p = adjList[i];
+        if (dfs_visit(p, adjList, marked, onStack) == -1)
+            return -1;
     }
     return 0;
 }
 
-int dfs_visit(Pessoa *p){
-    Pessoa *adj = p;
+int dfs_visit(Pessoa *p, Pessoa **adjList, vector<bool> &marked, vector<bool> &onStack){
+    int id = p->pessoa_id;
 
-    p->mark = GREY;
-    p->onStack = true;
+    marked[id-1] = true;
+    onStack[id-1] = true;
 
-    while(adj->prox != NULL){
-        adj = adj->prox;
+    while(p->prox != NULL){
+        p = p->prox;
+        int idAdj = p->pessoa_id;
 
-        if(adj->mark == WHITE)
-            dfs_visit(adj);
-        else if(adj->mark == BLACK && adj->onStack == true)
+        if(!(marked[idAdj-1]))
+            dfs_visit(obterAdjacencias(adjList, idAdj), adjList, marked, onStack);
+
+        else if(onStack[idAdj-1])
             return -1;
     }
 
-    p->mark = BLACK;
-    p->onStack = false;
+    onStack[id-1] = false;
 
     return 0;
 }
