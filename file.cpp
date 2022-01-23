@@ -91,12 +91,11 @@ int main(){
 
     printf("verificando se há ciclo de parentes com dfs\n");
     // verificar se há ciclo de parentes
-    /*
     if (dfs(nOfVertices, adjList) == -1) {
         cout << "0\n";
         return -1;
     }
-    */
+    cout << "no cicle\n";
     
     // pesquisar ancestrais comuns mais próximos
 
