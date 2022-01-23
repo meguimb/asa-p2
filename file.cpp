@@ -4,11 +4,17 @@
 #include <bits/stdc++.h>
 #include <algorithm>
 
+#define WHITE 0
+#define GREY  1
+#define BLACK 2
+
 using namespace std;
 
 struct pessoa{
     int pessoa_id;
     struct pessoa *prox;
+    int mark;
+    bool onStack;
 };
 typedef struct pessoa Pessoa;
 
@@ -16,6 +22,17 @@ typedef struct pessoa Pessoa;
 Pessoa *obterAdjacencias(Pessoa **adj_list, int pessoa_id);
 int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool verificar_num_max_pais);
 Pessoa *criar_pessoa(int pessoa_id);
+int dfs(int nOfVertices, Pessoa **adjList);
+int dfs_visit(Pessoa *p);
+
+Pessoa *criar_pessoa(int pessoa_id){
+    Pessoa *p = new Pessoa;
+    p->pessoa_id = pessoa_id;
+    p->prox = NULL;
+    p->mark = WHITE;
+    p->onStack = false;
+    return p;
+}
 
 int main(){
     int v1, v2, nOfVertices, nOfEdges, temp1, temp2;
@@ -69,8 +86,9 @@ int main(){
     }
 
     // verificar se há ciclo de parentes
-    for (int i = 1; i <= nOfVertices; i++){
-        
+    if (dfs(nOfVertices, adjList) == -1) {
+        cout << '0\n';
+        return -1;
     }
     // pesquisar ancestrais comuns mais próximos
 
@@ -79,7 +97,34 @@ int main(){
     return 0;
 }
 
-int dfs(int initialVertice){
+int dfs(int nOfVertices, Pessoa **adjList){
+    for (int i = 0; i < nOfVertices; i++){
+        Pessoa *p = adjList[nOfVertices];
+        if (p->mark == WHITE)
+            if (dfs_visit(p) == -1)
+                return -1;
+    }
+    return 0;
+}
+
+int dfs_visit(Pessoa *p){
+    Pessoa *adj = p;
+
+    p->mark = GREY;
+    p->onStack = true;
+
+    while(adj->prox != NULL){
+        adj = adj->prox;
+
+        if(adj->mark == WHITE)
+            dfs_visit(adj);
+        else if(adj->mark == BLACK && adj->onStack == true)
+            return -1;
+    }
+
+    p->mark = BLACK;
+    p->onStack = false;
+
     return 0;
 }
 
@@ -103,11 +148,4 @@ int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool 
     }
     adjs->prox = criar_pessoa(pessoa_adjacente);
     return 0;
-}
-
-Pessoa *criar_pessoa(int pessoa_id){
-    Pessoa *p = new Pessoa;
-    p->pessoa_id = pessoa_id;
-    p->prox = NULL;
-    return p;
 }
