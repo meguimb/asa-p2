@@ -24,6 +24,9 @@ int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool 
 Pessoa *criar_pessoa(int pessoa_id);
 int dfs(int nOfVertices, Pessoa **adjList);
 int dfs_visit(Pessoa *p);
+Pessoa *ancestraisEmComum(Pessoa **adjListTransposed, int v1, int v2);
+int limparListasPessoas(Pessoa *lst);
+int imprimirListaPessoas(Pessoa *lst);
 
 Pessoa *criar_pessoa(int pessoa_id){
     Pessoa *p = new Pessoa;
@@ -85,15 +88,22 @@ int main(){
         }
     }
 
+    printf("verificando se há ciclo de parentes com dfs\n");
     // verificar se há ciclo de parentes
+    /*
     if (dfs(nOfVertices, adjList) == -1) {
-        cout << '0\n';
+        cout << "0\n";
         return -1;
     }
+    */
+    printf("procurando ancestrais comuns\n");
     // pesquisar ancestrais comuns mais próximos
-
+    Pessoa *lst = ancestraisEmComum(adjListTransposed, v1, v2);
+    printf("imprimindo lista de ancestrais em comum\n");
+    imprimirListaPessoas(lst);
+    limparListasPessoas(lst);
     // output 
-
+    // limpar listas de adjacencias
     return 0;
 }
 
@@ -147,5 +157,102 @@ int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool 
         return -1;
     }
     adjs->prox = criar_pessoa(pessoa_adjacente);
+    return 0;
+}
+
+// retorna ancestrais da Pessoa a
+Pessoa *todosAncestraisDePessoaA(Pessoa **adjListTransposed, int pessoa_a_id){
+    Pessoa *ancestrais = NULL;
+    Pessoa *ancestrais_temp = NULL;
+    Pessoa *pais = obterAdjacencias(adjListTransposed, pessoa_a_id);
+    // passar o filho à frente
+    pais = pais->prox;
+    if (pais==NULL){
+        return NULL;
+    }
+    ancestrais = criar_pessoa(pessoa_a_id);
+    ancestrais_temp = ancestrais;
+    while (pais != NULL){
+        ancestrais_temp->prox = criar_pessoa(pais->pessoa_id);
+        ancestrais_temp = ancestrais_temp->prox;
+        ancestrais_temp->prox = todosAncestraisDePessoaA(adjListTransposed, pais->pessoa_id);
+        pais = pais->prox;
+    }
+    ancestrais_temp = ancestrais;
+    ancestrais = ancestrais->prox;
+    delete ancestrais_temp;
+    return ancestrais;
+}
+
+Pessoa *ancestraisEmComum(Pessoa **adjListTransposed, int v1, int v2){
+    Pessoa * ancestrais_v1 = todosAncestraisDePessoaA(adjListTransposed, v1);
+    Pessoa * ancestrais_v2 = todosAncestraisDePessoaA(adjListTransposed, v2);
+    Pessoa *ancs_v1_temp, *ancs_v2_temp;
+    if (ancestrais_v1 == NULL || ancestrais_v2 == NULL){
+        return NULL;
+    }
+    ancs_v1_temp = ancestrais_v1;
+    ancs_v2_temp = ancestrais_v2;
+    Pessoa *ancestrais_comum = criar_pessoa(0);
+    Pessoa *rtn_ancestrais = ancestrais_comum;
+    while (ancs_v1_temp != NULL){
+        while (ancs_v2_temp != NULL){
+            if (ancs_v1_temp->pessoa_id == ancs_v2_temp->pessoa_id){
+                ancestrais_comum->prox = criar_pessoa(ancs_v1_temp->pessoa_id);
+                ancestrais_comum = ancestrais_comum->prox;
+            }
+            ancs_v2_temp = ancs_v2_temp->prox;
+        }
+        ancs_v1_temp = ancs_v1_temp->prox;
+        ancs_v2_temp = ancestrais_v2;
+    }
+
+    printf("encontramos lista de ancestrais em comum\n");
+    imprimirListaPessoas(rtn_ancestrais);
+
+    // limpar listas de ancestrais
+    limparListasPessoas(ancestrais_v1);
+    limparListasPessoas(ancestrais_v2);
+
+    // passando o zero inicial à frente (cabeça da lista)
+    ancestrais_comum = rtn_ancestrais;
+    rtn_ancestrais = rtn_ancestrais->prox;
+    delete ancestrais_comum;
+    return rtn_ancestrais;
+}
+
+int limparListasPessoas(Pessoa *lst){
+    Pessoa *temp;
+    while (lst->prox != NULL){
+        temp = lst;
+        lst = lst->prox;
+        delete temp;
+    }
+    delete lst;
+    return 0;
+}
+
+int limparListaAdjacencias(Pessoa **adjs_lst, int tamanho){
+    for (int i = 0; i < tamanho; i++){
+        limparListasPessoas(adjs_lst[i]);
+    }
+    delete adjs_lst;
+    return 0;
+}
+
+int imprimirListaPessoas(Pessoa *lst){
+    while (lst != NULL){
+        printf("%d ", lst->pessoa_id);
+        lst = lst->prox;
+    }
+    printf("\n");
+    return 0;
+}
+
+int obterAncestraisComunsMaisProxOrdemAlfabetica(Pessoa *lst){
+    // fazer algoritmo que vai subindo desde os vertices v1 e v2
+    // utilizando a lista de adjacencias tranposta e a nao transposta
+    // verifica a cada ascestral comum de v1 e v2 se nao há nenhum ancestral v1 e v2 
+    // que é ancestral desse ancestral também
     return 0;
 }
