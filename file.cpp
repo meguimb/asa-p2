@@ -1,7 +1,6 @@
 // g++ -std=c++11 -O3 -Wall file.cpp -lm
 #include <iostream>
 #include <vector>
-#include <bits/stdc++.h>
 #include <algorithm>
 #include <queue>
 
