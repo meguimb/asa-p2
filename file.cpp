@@ -10,8 +10,6 @@ using namespace std;
 struct pessoa{
     int pessoa_id;
     struct pessoa *prox;
-    int mark;
-    bool onStack;
 };
 typedef struct pessoa Pessoa;
 
@@ -34,8 +32,6 @@ Pessoa *criar_pessoa(int pessoa_id){
     Pessoa *p = new Pessoa;
     p->pessoa_id = pessoa_id;
     p->prox = NULL;
-    p->mark = WHITE;
-    p->onStack = false;
     return p;
 }
 
@@ -89,22 +85,24 @@ int main(){
         }
     }
 
-    printf("verificando se há ciclo de parentes com dfs\n");
     // verificar se há ciclo de parentes
     if (dfs(nOfVertices, adjList) == -1) {
         cout << "0\n";
         return -1;
     }
-    cout << "no cicle\n";
+    // cout << "no cicle\n";
     
     // pesquisar ancestrais comuns mais próximos
 
     // output 
     Pessoa *rtnList = obterAncestraisComunsMaisProxOrdemAlfabetica(adjListTransposed, v1, v2);
-    imprimirListaPessoas(rtnList);
-    printf("limpando lista de pessoas\n");
-    limparListasPessoas(rtnList);
-    printf("limpando lista de adjacencias\n");
+    if (rtnList == NULL){
+        printf("-\n");
+    }
+    else{
+        imprimirListaPessoas(rtnList);
+        limparListasPessoas(rtnList);
+    }
     limparListaAdjacencias(adjList, nOfVertices);
     limparListaAdjacencias(adjListTransposed, nOfVertices);
     // limpar listas de adjacencias
@@ -192,8 +190,10 @@ Pessoa *todosAncestraisDePessoaA(Pessoa **adjListTransposed, int pessoa_a_id){
 }
 
 Pessoa *ancestraisEmComum(Pessoa **adjListTransposed, int v1, int v2){
-    Pessoa * ancestrais_v1 = todosAncestraisDePessoaA(adjListTransposed, v1);
-    Pessoa * ancestrais_v2 = todosAncestraisDePessoaA(adjListTransposed, v2);
+    Pessoa * ancestrais_v1 = criar_pessoa(v1);
+    Pessoa * ancestrais_v2 = criar_pessoa(v2);
+    ancestrais_v1->prox = todosAncestraisDePessoaA(adjListTransposed, v1);
+    ancestrais_v2->prox = todosAncestraisDePessoaA(adjListTransposed, v2);
     Pessoa *ancs_v1_temp, *ancs_v2_temp;
     if (ancestrais_v1 == NULL || ancestrais_v2 == NULL){
         return NULL;
@@ -222,7 +222,6 @@ Pessoa *ancestraisEmComum(Pessoa **adjListTransposed, int v1, int v2){
     ancestrais_comum = rtn_ancestrais;
     rtn_ancestrais = rtn_ancestrais->prox;
     delete ancestrais_comum;
-    printf("retornando ancestrais\n");
     return rtn_ancestrais;
 }
 
@@ -266,10 +265,11 @@ Pessoa *obterAncestraisComunsMaisProxOrdemAlfabetica(Pessoa **adjListTransposed,
     // possiveis ascendentes, então, é ascendente próximo
     int ehAscendente;
     Pessoa *ancestraisComuns = ancestraisEmComum(adjListTransposed, v1, v2);
+    if (ancestraisComuns == NULL){
+        return NULL;
+    }
     Pessoa *temp1 = ancestraisComuns, *temp2 = ancestraisComuns;
-    Pessoa *ancestraisComunsMaisProx = NULL, *rtnList = NULL;
-    printf("imprimindo ancestrais em comum\n");
-    imprimirListaPessoas(ancestraisComuns);
+    Pessoa *ancestraisComunsMaisProx = NULL;
     // percorrer a lista de ancestrais comuns ver se eles não apontam para nenhum dos outros
     while (temp1 != NULL){
         ehAscendente = 0;
@@ -283,27 +283,13 @@ Pessoa *obterAncestraisComunsMaisProxOrdemAlfabetica(Pessoa **adjListTransposed,
             }
             temp2 = temp2->prox;
         }
-        printf("ascendente is %d\n", ehAscendente);
         if (ehAscendente == 0){
-            printf("encontramos ascendente proximo!!!\n");
-            adicionarPessoaOrdemCrescente(ancestraisComunsMaisProx, criar_pessoa(temp1->pessoa_id));
-            /*
-            if (ancestraisComunsMaisProx == NULL){
-                ancestraisComunsMaisProx = criar_pessoa(temp1->pessoa_id);
-                rtnList = ancestraisComunsMaisProx;
-            }
-            else{
-                ancestraisComunsMaisProx->prox = criar_pessoa(temp1->pessoa_id);
-                ancestraisComunsMaisProx = ancestraisComunsMaisProx->prox;
-            }
-            */
+            ancestraisComunsMaisProx = adicionarPessoaOrdemCrescente(ancestraisComunsMaisProx, criar_pessoa(temp1->pessoa_id));
         }
         temp1 = temp1->prox;
     }
-    printf("retornando rtnList e saindo da funcao\n");
-    imprimirListaPessoas(rtnList);
     delete ancestraisComuns;
-    return rtnList;
+    return ancestraisComunsMaisProx;
 }
 
 bool ehAscendenteDeA(Pessoa **adjListTransposed, int ascendente, int pessoa_a){
@@ -311,21 +297,18 @@ bool ehAscendenteDeA(Pessoa **adjListTransposed, int ascendente, int pessoa_a){
     int pessoa_id_atual;
     Pessoa *pessoa_atual;
     ascendentes.push(pessoa_a);
-    printf("verificando se %d é ascendente de %d\n", ascendente, pessoa_a);
     while (!ascendentes.empty()){
         pessoa_id_atual = ascendentes.front();
         ascendentes.pop();
         pessoa_atual = adjListTransposed[pessoa_id_atual-1];
         while (pessoa_atual->prox != NULL){
             if (pessoa_atual->prox->pessoa_id == ascendente){
-                printf("verdadeiro\n");
                 return true;
             }
             ascendentes.push(pessoa_atual->prox->pessoa_id);
             pessoa_atual = pessoa_atual->prox;
         }
     }
-    printf("falso\n");
     return false;
 }
 
@@ -347,6 +330,3 @@ Pessoa *adicionarPessoaOrdemCrescente(Pessoa *lst, Pessoa *p){
     lst_temp->prox = p;
     return lst;
 }
-
-
-
