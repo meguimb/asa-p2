@@ -85,6 +85,7 @@ int main(){
         if (temp1 == temp2 || temp1 < 1 || temp2 < 1 || temp1 > nOfVertices || temp2 > nOfVertices){
             printf("0\n");
             limparListaAdjacencias(adjListTransposed, nOfVertices);
+            delete cabecas;
             return 0;
         }
 
@@ -103,12 +104,15 @@ int main(){
         if (counter > 2){
             printf("0\n");
             limparListaAdjacencias(adjListTransposed, nOfVertices);
+            delete cabecas;
             return 0;
         }
     }
     // verificar se há ciclo de parentes
     if (dfs(nOfVertices, adjListTransposed) == -1) {
         cout << "0\n";
+        limparListaAdjacencias(adjListTransposed, nOfVertices);
+        delete cabecas;
         return 0;
     }
     // cout << "no cicle\n";
@@ -147,14 +151,15 @@ int dfs_visit(Pessoa *p, Pessoa **adjList, vector<bool> &marked, vector<bool> &o
 
     marked[id-1] = true;
     onStack[id-1] = true;
-
     while(p->prox != NULL){
         p = p->prox;
         int idAdj = p->pessoa_id;
 
-        if(!(marked[idAdj-1]))
-            dfs_visit(obterAdjacencias(adjList, idAdj), adjList, marked, onStack);
-
+        if(!(marked[idAdj-1])){
+            if (dfs_visit(obterAdjacencias(adjList, idAdj), adjList, marked, onStack)==-1){
+                return -1;
+            }
+        }
         else if(onStack[idAdj-1])
             return -1;
     }
