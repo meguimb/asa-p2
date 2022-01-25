@@ -55,7 +55,7 @@ CabecaPessoa *criar_cabeca_pessoa(int pessoa_id){
 }
 
 int tempo;
-Pessoa *pais = criar_pessoa(0);
+Pessoa *pais = NULL;
 
 
 int main(){
@@ -156,7 +156,7 @@ int dfs_visit(Pessoa *p, Pessoa **adjList, vector<bool> &marked, vector<bool> &o
         int idAdj = p->pessoa_id;
 
         if(!(marked[idAdj-1])){
-            if (dfs_visit(obterAdjacencias(adjList, idAdj), adjList, marked, onStack)==-1){
+            if (dfs_visit(obterAdjacencias(adjList, idAdj), adjList, marked, onStack) == -1){
                 return -1;
             }
         }
@@ -218,26 +218,25 @@ Pessoa *algo(int numOfVertices, Pessoa **adjListTransposed, int v1, int v2, Cabe
     // Second, we should start the DFS on the other node v. When we reach it, we recolor all red ancestors of v in black.
     // Finally, we built a subgraph, induced by the black nodes. The nodes in a new graph with zero out-degrees are the answers.
     int adicionar;
-    // printf("inicio do algo\n");
     for (int i = 0; i < numOfVertices; i++){
         cabecas[i]->cor = WHITE;
     }
-    // printf("antes das dfs\n");
     if (DFS_Visit(v2, adjListTransposed, v1, v1, cabecas) != -1){
         DFS_Visit(v1, adjListTransposed, v2, v2, cabecas);
     }
     // DFS(numOfVertices, adjListTransposed, v1, cabecas);
     // DFS(numOfVertices, adjListTransposed, v2, cabecas);
-    // printf("depois das dfs\n");
     if (pais == NULL){
         return NULL;
     }
-    // printf("\npaissssss\n");
     Pessoa *rtn = NULL;
-    // printf("antes do for\n");
-    for (Pessoa *temp1 = pais->prox; temp1 != NULL; temp1=temp1->prox){
+    for (Pessoa *temp1 = pais; temp1 != NULL; temp1=temp1->prox){
         adicionar = 1;
-        for (Pessoa *temp2 = pais->prox; temp2 != NULL; temp2=temp2->prox){
+        for (Pessoa *temp2 = pais; temp2 != NULL; temp2=temp2->prox){
+            if (temp1->pessoa_id == 0 || temp2->pessoa_id == 0){
+                adicionar = 0;
+                break;
+            }
             if (temp1->pessoa_id != temp2->pessoa_id && ehAscendenteDeA(adjListTransposed, temp1->pessoa_id, temp2->pessoa_id)){
                 adicionar = 0;
                 break;
@@ -247,24 +246,20 @@ Pessoa *algo(int numOfVertices, Pessoa **adjListTransposed, int v1, int v2, Cabe
             rtn = adicionarPessoaOrdemCrescente(rtn, criar_pessoa(temp1->pessoa_id));
         }
     }
-    limparListasPessoas(pais);
+    if (pais!=NULL)
+        limparListasPessoas(pais);
     return rtn;
 }   
 
 
 int DFS_Visit(int other_vertice, Pessoa **adjListTransposed, int vertice, int startingVertice, CabecaPessoa **cabecas){
-    // printf("inside DFS_Visit, vertice %d\n", vertice);
     CabecaPessoa *vertice_pessoa = cabecas[vertice-1];
     vertice_pessoa->cor = RED;
     vertice_pessoa->startingVertice = startingVertice;
     Pessoa *adjs_vertice = obterAdjacencias(adjListTransposed, vertice)->prox;
-    // printf("antes do while\n");
     while (adjs_vertice != NULL){
         if (adjs_vertice->pessoa_id == other_vertice){
-            if (pais->prox != NULL){
-                limparListasPessoas(pais->prox);
-            }
-            pais->prox = criar_pessoa(other_vertice);
+            pais = criar_pessoa(other_vertice);
             return -1;
         }
         // Pessoa *p = obterAdjacencias(adjListTransposed, adjs_vertice->pessoa_id);
@@ -297,7 +292,6 @@ Pessoa *adicionarPessoaOrdemCrescente(Pessoa *lst, Pessoa *p){
     }
     // senao, percorrer a lista
     while(lst_temp->prox != NULL && lst_temp->pessoa_id <= p->pessoa_id){
-
         lst_temp = lst_temp->prox;
     }
     if (lst_temp->pessoa_id == p->pessoa_id){
