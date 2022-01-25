@@ -13,32 +13,32 @@ using namespace std;
 struct pessoa{
     int pessoa_id;
     struct pessoa *prox;
-    int cor;
-    int descoberto;
-    int fechado;
-    int pai;
-    int startingVertice;
     struct pessoa *last;
 };
 typedef struct pessoa Pessoa;
 
+struct cabeca_pessoa{
+    int pessoa_id;
+    int cor;
+    int startingVertice;
+};
+typedef struct cabeca_pessoa CabecaPessoa;
 
 Pessoa *obterAdjacencias(Pessoa **adj_list, int pessoa_id);
 int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente);
 Pessoa *criar_pessoa(int pessoa_id);
 int dfs(int nOfVertices, Pessoa **adjList);
 int dfs_visit(Pessoa *p, Pessoa **adjList, vector<bool> &marked, vector<bool> &onStack);
-Pessoa *ancestraisEmComum(Pessoa **adjListTransposed, int v1, int v2);
 int limparListasPessoas(Pessoa *lst);
 int imprimirListaPessoas(Pessoa *lst);
 bool ehAscendenteDeA(Pessoa **adjList, int ascendente, int pessoa_a);
-Pessoa *obterAncestraisComunsMaisProxOrdemAlfabetica(Pessoa **adjList, Pessoa **adjListTransposed, int v1, int v2);
 int limparListaAdjacencias(Pessoa **adjs_lst, int tamanho);
 Pessoa *adicionarPessoaOrdemCrescente(Pessoa *lst, Pessoa *p);
 Pessoa *newAlgo(Pessoa **adjList, Pessoa **adjListTransposed, int v1, int v2);
-int DFS_Visit(int numVertices, Pessoa **adjListTransposed, int vertice, int startingIndex);
-int DFS(int numVertices, Pessoa **adjListTransposed, int v1);
-Pessoa *algo(int numOfVertices, Pessoa **adjListTransposed, int v1, int v2);
+int DFS_Visit(int numVertices, Pessoa **adjListTransposed, int vertice, int startingIndex, CabecaPessoa **cabecas);
+int DFS(int otherVertice, Pessoa **adjListTransposed, int v1, CabecaPessoa **cabecas);
+Pessoa *algo(int numOfVertices, Pessoa **adjListTransposed, int v1, int v2, CabecaPessoa **cabecas);
+bool ehAscendenteDeA(Pessoa **adjListTransposed, int ascendente, int pessoa_a);
 
 
 Pessoa *criar_pessoa(int pessoa_id){
@@ -48,8 +48,16 @@ Pessoa *criar_pessoa(int pessoa_id){
     return p;
 }
 
+CabecaPessoa *criar_cabeca_pessoa(int pessoa_id){
+    CabecaPessoa *p = new CabecaPessoa;
+    p->pessoa_id = pessoa_id;
+    return p;
+}
+
 int tempo;
 Pessoa *pais = criar_pessoa(0);
+
+
 int main(){
     int v1, v2, nOfVertices, nOfEdges, temp1, temp2;
     // receber input de v1 e v2
@@ -59,16 +67,15 @@ int main(){
     cin >> nOfVertices >> nOfEdges;
 
     // criar matriz de adjacencia e matriz de adjacencia transposta
-    Pessoa **adjList = new Pessoa*[nOfVertices]; // cada adjList[i] tem as adjacencias da Pessoa i (onde aponta)
-    Pessoa **adjListTransposed = new Pessoa*[nOfVertices]; // cada adjListTransposed[i] tem as Pessoas a que é adjacente (onde é apontado)
     
+    Pessoa **adjListTransposed = new Pessoa *[nOfVertices]; // cada adjListTransposed[i] tem as Pessoas a que é adjacente (onde é apontado)
+    CabecaPessoa **cabecas = new CabecaPessoa *[nOfVertices];
     // int color [nOfVertices]; // 0 - unvisited, 1 - being visited, 2 - has been visited
     for (int i = 1; i <= nOfVertices; i++){
         // color[i] = 0;
-        adjList[i-1] = criar_pessoa(i);
         adjListTransposed[i-1] = criar_pessoa(i);
         adjListTransposed[i-1]->last = adjListTransposed[i-1];
-        adjList[i-1]->last = adjList[i-1];
+        cabecas[i-1] = criar_cabeca_pessoa(i);
     }
     
     // receber arcos
@@ -77,13 +84,11 @@ int main(){
         // verificar condições 
         if (temp1 == temp2 || temp1 < 1 || temp2 < 1 || temp1 > nOfVertices || temp2 > nOfVertices){
             printf("0\n");
-            limparListaAdjacencias(adjList, nOfVertices);
             limparListaAdjacencias(adjListTransposed, nOfVertices);
             return 0;
         }
 
         // adicionar arco às listas de adjacencia
-        adicionarListaAdj(adjList, temp1, temp2);
         adicionarListaAdj(adjListTransposed, temp2, temp1);
     }
     
@@ -97,33 +102,30 @@ int main(){
         }
         if (counter > 2){
             printf("0\n");
-            limparListaAdjacencias(adjList, nOfVertices);
             limparListaAdjacencias(adjListTransposed, nOfVertices);
             return 0;
         }
     }
-
     // verificar se há ciclo de parentes
-    if (dfs(nOfVertices, adjList) == -1) {
+    if (dfs(nOfVertices, adjListTransposed) == -1) {
         cout << "0\n";
         return 0;
     }
     // cout << "no cicle\n";
-    
     // pesquisar ancestrais comuns mais próximos
 
     // output 
-    algo(nOfVertices, adjListTransposed, v1, v2);
+    Pessoa *rtnList = algo(nOfVertices, adjListTransposed, v1, v2, cabecas);
     // pais -> 0 1 2 4
-    if (pais == NULL){
+    if (rtnList == NULL){
         printf("-\n");
     }
     else{
-        imprimirListaPessoas(pais);
-        limparListasPessoas(pais);
+        imprimirListaPessoas(rtnList);
+        limparListasPessoas(rtnList);
     }
-    limparListaAdjacencias(adjList, nOfVertices);
     limparListaAdjacencias(adjListTransposed, nOfVertices);
+    delete cabecas;
     // limpar listas de adjacencias
     return 0;
 }
@@ -170,21 +172,6 @@ int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente){
     Pessoa *adjs = obterAdjacencias(adj_list, pessoa);
     adjs->last->prox = criar_pessoa(pessoa_adjacente);
     adjs->last = adjs->last->prox;
-    /*
-    while (adjs->prox != NULL){
-        // arco / relação inválida
-        if (adjs->pessoa_id == pessoa_adjacente){
-            // arco repetido
-            return -1;
-        }
-        adjs = adjs->prox;
-        tamanho++;
-    }
-    if (verificar_num_max_pais && tamanho >= 2){
-        return -1;
-    }
-    adjs->prox = criar_pessoa(pessoa_adjacente);
-    */
     return 0;
 }
 
@@ -217,7 +204,7 @@ int imprimirListaPessoas(Pessoa *lst){
     return 0;
 }
 
-Pessoa *algo(int numOfVertices, Pessoa **adjListTransposed, int v1, int v2){
+Pessoa *algo(int numOfVertices, Pessoa **adjListTransposed, int v1, int v2, CabecaPessoa **cabecas){
     // Suppose we want to find the LCA(u, v) in graph G. 
     // Initially, all the vertices are colored white.
     // First, we do a Depth-First Search (DFS) on one of the target nodes. 
@@ -225,50 +212,70 @@ Pessoa *algo(int numOfVertices, Pessoa **adjListTransposed, int v1, int v2){
     // During the DFS, we color all the ancestors of u in red each time we reach it.
     // Second, we should start the DFS on the other node v. When we reach it, we recolor all red ancestors of v in black.
     // Finally, we built a subgraph, induced by the black nodes. The nodes in a new graph with zero out-degrees are the answers.
+    int adicionar;
+    // printf("inicio do algo\n");
     for (int i = 0; i < numOfVertices; i++){
-        adjListTransposed[i]->cor = WHITE;
-        adjListTransposed[i]->descoberto = 0;
-        adjListTransposed[i]->fechado = 0;
-        adjListTransposed[i]->pai = 0;
+        cabecas[i]->cor = WHITE;
     }
-    DFS(numOfVertices, adjListTransposed, v1);
-    DFS(numOfVertices, adjListTransposed, v2);
-    return NULL;
+    // printf("antes das dfs\n");
+    if (DFS_Visit(v2, adjListTransposed, v1, v1, cabecas) != -1){
+        DFS_Visit(v1, adjListTransposed, v2, v2, cabecas);
+    }
+    // DFS(numOfVertices, adjListTransposed, v1, cabecas);
+    // DFS(numOfVertices, adjListTransposed, v2, cabecas);
+    // printf("depois das dfs\n");
+    if (pais == NULL){
+        return NULL;
+    }
+    // printf("\npaissssss\n");
+    Pessoa *rtn = NULL;
+    // printf("antes do for\n");
+    for (Pessoa *temp1 = pais->prox; temp1 != NULL; temp1=temp1->prox){
+        adicionar = 1;
+        for (Pessoa *temp2 = pais->prox; temp2 != NULL; temp2=temp2->prox){
+            if (temp1->pessoa_id != temp2->pessoa_id && ehAscendenteDeA(adjListTransposed, temp1->pessoa_id, temp2->pessoa_id)){
+                adicionar = 0;
+                break;
+            }
+        }
+        if (adicionar==1){
+            rtn = adicionarPessoaOrdemCrescente(rtn, criar_pessoa(temp1->pessoa_id));
+        }
+    }
+    limparListasPessoas(pais);
+    return rtn;
 }   
 
 
-int DFS(int numVertices, Pessoa **adjListTransposed, int v1){
-    tempo = 0;
-    // fazer dfs nas pessoas pedidas v1 e v2
-    // printf("before DFS_VISIT\n");
-    DFS_Visit(numVertices, adjListTransposed, v1, v1);
-    return 0;
-}
-
-int DFS_Visit(int numVertices, Pessoa **adjListTransposed, int vertice, int startingVertice){
+int DFS_Visit(int other_vertice, Pessoa **adjListTransposed, int vertice, int startingVertice, CabecaPessoa **cabecas){
     // printf("inside DFS_Visit, vertice %d\n", vertice);
-    tempo = tempo + 1;
-    Pessoa *vertice_pessoa = obterAdjacencias(adjListTransposed, vertice);
-    vertice_pessoa->descoberto = tempo;
+    CabecaPessoa *vertice_pessoa = cabecas[vertice-1];
     vertice_pessoa->cor = RED;
     vertice_pessoa->startingVertice = startingVertice;
-    Pessoa *adjs_vertice = vertice_pessoa->prox;
+    Pessoa *adjs_vertice = obterAdjacencias(adjListTransposed, vertice)->prox;
+    // printf("antes do while\n");
     while (adjs_vertice != NULL){
-        Pessoa *p = obterAdjacencias(adjListTransposed, adjs_vertice->pessoa_id);
-        if (p->cor == RED && p->startingVertice != startingVertice){
+        if (adjs_vertice->pessoa_id == other_vertice){
+            if (pais->prox != NULL){
+                limparListasPessoas(pais->prox);
+            }
+            pais->prox = criar_pessoa(other_vertice);
+            return -1;
+        }
+        // Pessoa *p = obterAdjacencias(adjListTransposed, adjs_vertice->pessoa_id);
+        CabecaPessoa *cp = cabecas[adjs_vertice->pessoa_id-1];
+        if (cp->cor == RED && cp->startingVertice != startingVertice){
             // printf("BOTH DFS GOT HERE\nid of p is %d and startingVertice is %d\n\n", p->pessoa_id, p->startingVertice);
             pais = adicionarPessoaOrdemCrescente(pais, criar_pessoa(adjs_vertice->pessoa_id));
-            p->cor = BLACK;
+            cp->cor = BLACK;
         }
-        if (p->cor == WHITE){
-            p->pai = vertice_pessoa->pessoa_id;
-            DFS_Visit(numVertices, adjListTransposed, adjs_vertice->pessoa_id, startingVertice);
+        if (cp->cor == WHITE){
+            if (DFS_Visit(other_vertice, adjListTransposed, adjs_vertice->pessoa_id, startingVertice, cabecas) == -1){
+                return -1;
+            }
         }
         adjs_vertice = adjs_vertice->prox;
     }
-    tempo = tempo + 1;
-    vertice_pessoa->fechado = tempo;
-    /* vertice_pessoa->cor = BLACK; */
     return 0;
 }
 
@@ -295,4 +302,24 @@ Pessoa *adicionarPessoaOrdemCrescente(Pessoa *lst, Pessoa *p){
         lst_temp->prox = p;
     }
     return lst;
+}
+
+bool ehAscendenteDeA(Pessoa **adjListTransposed, int ascendente, int pessoa_a){
+    queue<int> ascendentes;
+    int pessoa_id_atual;
+    Pessoa *pessoa_atual;
+    ascendentes.push(pessoa_a);
+    while (!ascendentes.empty()){
+        pessoa_id_atual = ascendentes.front();
+        ascendentes.pop();
+        pessoa_atual = adjListTransposed[pessoa_id_atual-1];
+        while (pessoa_atual->prox != NULL){
+            if (pessoa_atual->prox->pessoa_id == ascendente){
+                return true;
+            }
+            ascendentes.push(pessoa_atual->prox->pessoa_id);
+            pessoa_atual = pessoa_atual->prox;
+        }
+    }
+    return false;
 }
