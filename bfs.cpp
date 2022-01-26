@@ -23,7 +23,6 @@ int dfs(int nOfVertices, Pessoa **adjList);
 int dfs_visit(Pessoa *p, Pessoa **adjList, vector<bool> &marked, vector<bool> &onStack);
 void colour(Pessoa **adjListTransposed, int colour1, int colour2, int id, vector<int> &colours);
 void count(Pessoa **adjListTransposed, int id, vector<int> &colours, vector<int> &counts, int nOfVertices);
-Pessoa *adicionarPessoaOrdemCrescente(Pessoa *lst, Pessoa *p);
 
 Pessoa *criar_pessoa(int pessoa_id){
     Pessoa *p = new Pessoa;
@@ -225,29 +224,4 @@ int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool 
     }
     adjs->prox = criar_pessoa(pessoa_adjacente);
     return 0;
-}
-
-Pessoa *adicionarPessoaOrdemCrescente(Pessoa *lst, Pessoa *p){
-    Pessoa *lst_temp = lst;
-    // se lista estiver vazia
-    if (lst == NULL){
-        return p;
-    }
-    // se for menor do que o primeiro logo
-    if (lst_temp->pessoa_id > p->pessoa_id){
-        p->prox = lst_temp;
-        return p;
-    }
-    // senao, percorrer a lista
-    while(lst_temp->prox != NULL && lst_temp->pessoa_id <= p->pessoa_id){
-
-        lst_temp = lst_temp->prox;
-    }
-    if (lst_temp->pessoa_id == p->pessoa_id){
-        return lst;
-    }
-    else{
-        lst_temp->prox = p;
-    }
-    return lst;
 }
