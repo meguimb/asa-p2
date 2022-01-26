@@ -18,7 +18,7 @@ struct pessoa{
 typedef struct pessoa Pessoa;
 
 Pessoa *obterAdjacencias(Pessoa **adj_list, int pessoa_id);
-int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool verificar_num_max_pais);
+int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente);
 Pessoa *criar_pessoa(int pessoa_id);
 int dfs(int nOfVertices, Pessoa **adjList);
 int dfs_visit(Pessoa *p, Pessoa **adjList, vector<bool> &marked, vector<bool> &onStack);
@@ -44,9 +44,11 @@ int main(){
     // criar matriz de adjacencia e matriz de adjacencia transposta
     Pessoa **adjListTransposed = new Pessoa*[nOfVertices]; // cada adjListTransposed[i] tem as Pessoas a que é adjacente (onde é apontado)
     // int color [nOfVertices]; // 0 - unvisited, 1 - being visited, 2 - has been visited
+    // int *numPais = new int(nOfVertices);
     for (int i = 1; i <= nOfVertices; i++){
         // color[i] = 0;
         adjListTransposed[i-1] = criar_pessoa(i);
+        // numPais[i-1] = 0;
     }
     // receber arcos
     for (int i = 0; i < nOfEdges; i++){
@@ -60,8 +62,7 @@ int main(){
             return 0;
         }
         // adicionar arco às listas de adjacencia
-        if (adicionarListaAdj(adjListTransposed, temp2, temp1, true)==-1)
-            return -1;
+        adicionarListaAdj(adjListTransposed, temp2, temp1);
     }
     
     if(cin >> temp) {
@@ -209,25 +210,6 @@ void count(Pessoa **adjListTransposed, int id, vector<int> &colours, vector<int>
 
 Pessoa *obterAdjacencias(Pessoa **adj_list, int pessoa_id){
     return adj_list[pessoa_id-1];
-}
-
-// TODO - mudar para utilizar a propriedade last
-int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool verificar_num_max_pais){
-    int tamanho = 0;
-    Pessoa *adjs = obterAdjacencias(adj_list, pessoa);
-    while (adjs->prox != NULL){
-        // arco / relação inválida
-        if (adjs->pessoa_id == pessoa_adjacente){
-            return -1;
-        }
-        adjs = adjs->prox;
-        tamanho++;
-    }
-    if (verificar_num_max_pais && tamanho >= 2){
-        return -1;
-    }
-    adjs->prox = criar_pessoa(pessoa_adjacente);
-    return 0;
 }
 
 int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente){ 
