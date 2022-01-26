@@ -13,6 +13,7 @@ using namespace std;
 struct pessoa{
     int pessoa_id;
     struct pessoa *prox;
+    struct pessoa *last;
 };
 typedef struct pessoa Pessoa;
 
@@ -28,6 +29,7 @@ Pessoa *criar_pessoa(int pessoa_id){
     Pessoa *p = new Pessoa;
     p->pessoa_id = pessoa_id;
     p->prox = NULL;
+    p->last = NULL;
     return p;
 }
 
@@ -68,6 +70,7 @@ int main(){
     }
     
     // verificar se qualquer filho tem mais de 2 pais
+    // TODO - mudar para utilizar uma array e ir aumentando quando se adiciona arestas
     for (int i = 1; i <= nOfVertices; i++){ 
         Pessoa *p = obterAdjacencias(adjListTransposed, i);
         int counter = 0;
@@ -208,6 +211,7 @@ Pessoa *obterAdjacencias(Pessoa **adj_list, int pessoa_id){
     return adj_list[pessoa_id-1];
 }
 
+// TODO - mudar para utilizar a propriedade last
 int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool verificar_num_max_pais){
     int tamanho = 0;
     Pessoa *adjs = obterAdjacencias(adj_list, pessoa);
@@ -223,5 +227,18 @@ int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente, bool 
         return -1;
     }
     adjs->prox = criar_pessoa(pessoa_adjacente);
+    return 0;
+}
+
+int adicionarListaAdj(Pessoa **adj_list, int pessoa, int pessoa_adjacente){ 
+    Pessoa *adjs = obterAdjacencias(adj_list, pessoa);
+    if (adjs->last == NULL){
+        adjs->last = criar_pessoa(pessoa_adjacente);
+        adjs->prox = adjs->last;
+    }
+    else{
+        adjs->last->prox = criar_pessoa(pessoa_adjacente);
+        adjs->last = adjs->last->prox;
+    }
     return 0;
 }
