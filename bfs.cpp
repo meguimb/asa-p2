@@ -33,7 +33,7 @@ Pessoa *criar_pessoa(int pessoa_id){
 }
 
 int main(){
-    int v1, v2, nOfVertices, nOfEdges, temp1, temp2;
+    int v1, v2, nOfVertices, nOfEdges, temp1, temp2, temp;
     // receber input de v1 e v2
     cin >> v1 >> v2;
 
@@ -49,15 +49,23 @@ int main(){
     }
     // receber arcos
     for (int i = 0; i < nOfEdges; i++){
-        cin >> temp1 >> temp2;
+        if(!(cin >> temp1 >> temp2)) {
+            cout << "0\n";
+            return 0;
+        }
         // verificar condições 
         if (temp1 == temp2 || temp1 < 1 || temp2 < 1 || temp1 > nOfVertices || temp2 > nOfVertices) {
             cout << "0\n";
-            return -1;
+            return 0;
         }
         // adicionar arco às listas de adjacencia
         if (adicionarListaAdj(adjListTransposed, temp2, temp1, true)==-1)
             return -1;
+    }
+    
+    if(cin >> temp) {
+        cout << "0\n";
+        return 0;
     }
     
     // verificar se qualquer filho tem mais de 2 pais
@@ -70,13 +78,13 @@ int main(){
         }
         if (counter > 2){
             cout << "0\n";
-            return -1;
+            return 0;
         }
     }
     // verificar se há ciclo de parentes
     if (dfs(nOfVertices, adjListTransposed) == -1) {
         cout << "0\n";
-        return -1;
+        return 0;
     }
 
     // pesquisar ancestrais comuns mais próximos
