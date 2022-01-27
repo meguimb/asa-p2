@@ -40,15 +40,21 @@ int main(){
 
     // receber numero de vertices e numero de arcos
     cin >> nOfVertices >> nOfEdges;
-
+    /*
+    if (nOfVertices < 1){
+        cout << "0\n";
+        return 0;
+    }
+    */
     // criar matriz de adjacencia e matriz de adjacencia transposta
     Pessoa **adjListTransposed = new Pessoa*[nOfVertices]; // cada adjListTransposed[i] tem as Pessoas a que é adjacente (onde é apontado)
     // int color [nOfVertices]; // 0 - unvisited, 1 - being visited, 2 - has been visited
-    // int *numPais = new int(nOfVertices);
+    int *numPais = new int[nOfVertices];
+
     for (int i = 1; i <= nOfVertices; i++){
         // color[i] = 0;
         adjListTransposed[i-1] = criar_pessoa(i);
-        // numPais[i-1] = 0;
+        numPais[i-1] = 0;
     }
     // receber arcos
     for (int i = 0; i < nOfEdges; i++){
@@ -63,6 +69,7 @@ int main(){
         }
         // adicionar arco às listas de adjacencia
         adicionarListaAdj(adjListTransposed, temp2, temp1);
+        numPais[temp2-1] += 1;
     }
     
     if(cin >> temp) {
@@ -71,7 +78,15 @@ int main(){
     }
     
     // verificar se qualquer filho tem mais de 2 pais
-    // TODO - mudar para utilizar uma array e ir aumentando quando se adiciona arestas
+    // TODO - mudar para utilizar uma array e ir aumentando quando se adiciona arestas~
+    for (int i = 0; i < nOfVertices; i++){
+        if (numPais[i] > 2){
+            cout << "0\n";
+            delete numPais;
+            return 0;
+        }
+    }
+    /*
     for (int i = 1; i <= nOfVertices; i++){ 
         Pessoa *p = obterAdjacencias(adjListTransposed, i);
         int counter = 0;
@@ -84,9 +99,11 @@ int main(){
             return 0;
         }
     }
+    */
     // verificar se há ciclo de parentes
     if (dfs(nOfVertices, adjListTransposed) == -1) {
         cout << "0\n";
+        delete numPais;
         return 0;
     }
 
@@ -123,7 +140,7 @@ int main(){
     if(!(found))
         cout << "-";
     cout << "\n";
-    
+    delete numPais;
     return 0;
 }
 
